@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx=".5" cy=".62" r=".7">
+      <stop offset="0" stop-color="#3a1a0c"/>
+      <stop offset=".55" stop-color="#1c0d07"/>
+      <stop offset="1" stop-color="#100805"/>
+    </radialGradient>
+    <linearGradient id="outer" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff5a1c"/>
+      <stop offset=".55" stop-color="#ff8a24"/>
+      <stop offset="1" stop-color="#ffb347"/>
+    </linearGradient>
+    <linearGradient id="inner" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd166"/>
+      <stop offset="1" stop-color="#fff3cf"/>
+    </linearGradient>
+    <linearGradient id="bark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a2f1d"/>
+      <stop offset=".5" stop-color="#6b4a31"/>
+      <stop offset="1" stop-color="#2c1b10"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".72" r=".45">
+      <stop offset="0" stop-color="#ff7a2a" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#ff7a2a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+  <path d="M262 74C318 152 378 198 378 292C378 360 324 408 256 408C188 408 134 360 134 292C134 238 162 202 190 174C192 216 206 240 228 250C216 186 228 128 262 74Z" fill="url(#outer)"/>
+  <path d="M258 206C288 250 316 278 316 324C316 360 290 386 256 386C222 386 196 360 196 326C196 296 214 276 230 262C232 286 240 298 252 302C244 268 246 238 258 206Z" fill="url(#inner)"/>
+  <g transform="rotate(-13 256 420)">
+    <rect x="120" y="398" width="272" height="44" rx="22" fill="url(#bark)"/>
+    <ellipse cx="370" cy="420" rx="11" ry="22" fill="#d9a96c"/>
+    <ellipse cx="370" cy="420" rx="5" ry="10" fill="none" stroke="#a5743f" stroke-width="2"/>
+  </g>
+  <g transform="rotate(13 256 420)">
+    <rect x="120" y="398" width="272" height="44" rx="22" fill="url(#bark)"/>
+    <ellipse cx="142" cy="420" rx="11" ry="22" fill="#d9a96c"/>
+    <ellipse cx="142" cy="420" rx="5" ry="10" fill="none" stroke="#a5743f" stroke-width="2"/>
+  </g>
+</svg>

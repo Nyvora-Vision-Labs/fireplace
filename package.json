@@ -1,0 +1,11 @@
+{
+  "name": "fireplace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A pomodoro timer you keep alive by feeding a fire. Each log burns for 15 minutes.",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8000 --directory public",
+    "test": "node --test \"tests/*.test.js\""
+  }
+}
