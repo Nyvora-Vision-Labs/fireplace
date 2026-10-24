@@ -4,27 +4,6 @@
 const NOTES = { C5: 523.25, E5: 659.25, G5: 783.99 };
 const FIRE_AUDIO = new URL('../audio/fireplace.wav', import.meta.url);
 
-function noiseBuffer(ctx, seconds, brown) {
-  const len = Math.floor(ctx.sampleRate * seconds);
-  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  let last = 0;
-  for (let i = 0; i < len; i++) {
-    const w = Math.random() * 2 - 1;
-    if (brown) {
-      last = (last + 0.02 * w) / 1.02;
-      d[i] = last * 3.5;
-    } else d[i] = w;
-  }
-  // Cross-fade the tail into the head so the loop has no click.
-  const fade = Math.floor(ctx.sampleRate * 0.05);
-  for (let i = 0; i < fade; i++) {
-    const k = i / fade;
-    d[len - fade + i] = d[len - fade + i] * (1 - k) + d[i] * k;
-  }
-  return buf;
-}
-
 export class FireSound {
   constructor() {
     this.ctx = null;
@@ -54,8 +33,6 @@ export class FireSound {
     comp.threshold.value = -16;
     comp.ratio.value = 4;
     this.master.connect(comp).connect(ctx.destination);
-
-    this.white = noiseBuffer(ctx, 3, false);
 
     this.fireGain = ctx.createGain();
     this.fireGain.gain.value = 0;
@@ -118,27 +95,25 @@ export class FireSound {
   }
 
   crackle(t, pop = false, gain = 1) {
+    const buffer = this.fireSource?.buffer;
+    if (!buffer) return;
     const ctx = this.ctx;
     const src = ctx.createBufferSource();
-    src.buffer = this.white;
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = pop ? 350 + Math.random() * 700 : 1300 + Math.random() * 5200;
-    filter.Q.value = pop ? 1.2 : 0.8 + Math.random() * 3;
+    src.buffer = buffer;
     const g = ctx.createGain();
-    const amp = (pop ? 0.45 + Math.random() * 0.4 : Math.pow(Math.random(), 2.4) * 0.5) * gain;
-    const dur = pop ? 0.03 + Math.random() * 0.05 : 0.004 + Math.random() * 0.024;
+    const amp = (pop ? 0.45 : 0.2) * gain;
+    const dur = pop ? 0.25 + Math.random() * 0.1 : 0.1 + Math.random() * 0.1;
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(amp, t + 0.0015);
+    g.gain.linearRampToValueAtTime(amp, t + 0.006);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    let out = src.connect(filter).connect(g);
+    let out = src.connect(g);
     if (ctx.createStereoPanner) {
       const pan = ctx.createStereoPanner();
       pan.pan.value = (Math.random() - 0.5) * 1.1;
       out = out.connect(pan);
     }
     out.connect(this.crackles);
-    src.start(t, Math.random() * 2.5, dur + 0.03);
+    src.start(t, Math.random() * (buffer.duration - dur - 0.03), dur + 0.03);
     if (pop) for (let i = 0; i < 3; i++) this.crackle(t + 0.02 + Math.random() * 0.12, false, gain * 0.7);
   }
 
@@ -170,9 +145,11 @@ export class FireSound {
   }
 
   rumble(t, dur, freq, vol) {
+    const buffer = this.fireSource?.buffer;
+    if (!buffer) return;
     const ctx = this.ctx;
     const src = ctx.createBufferSource();
-    src.buffer = this.white;
+    src.buffer = buffer;
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(freq * 0.4, t);
@@ -183,7 +160,7 @@ export class FireSound {
     g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.02, dur * 0.2));
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     src.connect(filter).connect(g).connect(this.master);
-    src.start(t, Math.random() * 2, dur + 0.05);
+    src.start(t, Math.random() * (buffer.duration - dur - 0.05), dur + 0.05);
   }
 
   bell(freq, t, vol) {

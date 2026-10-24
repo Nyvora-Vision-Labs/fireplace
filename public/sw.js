@@ -1,7 +1,7 @@
 // Offline support. Serves the app from the cache and refreshes the cache in
 // the background, so a new deploy shows up on the next visit.
 
-const CACHE = 'fireplace-v2';
+const CACHE = 'fireplace-v3';
 const SHELL = [
   './',
   'styles.css',
