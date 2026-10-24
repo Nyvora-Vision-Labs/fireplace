@@ -1,7 +1,8 @@
-// Fire sounds synthesized with the Web Audio API: a low roar, random crackles
-// and pops, a thunk when a log lands and soft bells at the 15-minute marks.
+// A recorded wood fire, with a thunk when a log lands and soft bells at the
+// 15-minute marks. Recording source and license: ../audio/LICENSE.txt.
 
 const NOTES = { C5: 523.25, E5: 659.25, G5: 783.99 };
+const FIRE_AUDIO = new URL('../audio/fireplace.wav', import.meta.url);
 
 function noiseBuffer(ctx, seconds, brown) {
   const len = Math.floor(ctx.sampleRate * seconds);
@@ -30,7 +31,8 @@ export class FireSound {
     this.on = true;
     this.level = 0;
     this.ember = 0;
-    this.next = 0;
+    this.fireSource = null;
+    this.loading = false;
   }
 
   // The first call has to come from a user gesture (browser autoplay rules).
@@ -38,6 +40,7 @@ export class FireSound {
     if (!this.on) return;
     if (!this.ctx) this.build();
     if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    if (this.ctx) this.loadFire();
   }
 
   build() {
@@ -54,34 +57,37 @@ export class FireSound {
 
     this.white = noiseBuffer(ctx, 3, false);
 
-    const roar = ctx.createBufferSource();
-    roar.buffer = noiseBuffer(ctx, 5, true);
-    roar.loop = true;
-    this.roarFilter = ctx.createBiquadFilter();
-    this.roarFilter.type = 'lowpass';
-    this.roarFilter.frequency.value = 300;
-    this.roarGain = ctx.createGain();
-    this.roarGain.gain.value = 0;
-    roar.connect(this.roarFilter).connect(this.roarGain).connect(this.master);
-    roar.start();
-
-    const hiss = ctx.createBufferSource();
-    hiss.buffer = this.white;
-    hiss.loop = true;
-    const band = ctx.createBiquadFilter();
-    band.type = 'bandpass';
-    band.frequency.value = 2600;
-    band.Q.value = 0.7;
-    this.hissGain = ctx.createGain();
-    this.hissGain.gain.value = 0;
-    hiss.connect(band).connect(this.hissGain).connect(this.master);
-    hiss.start(0, 1.3);
+    this.fireGain = ctx.createGain();
+    this.fireGain.gain.value = 0;
+    this.fireGain.connect(this.master);
 
     this.crackles = ctx.createGain();
     this.crackles.gain.value = 0.7;
     this.crackles.connect(this.master);
 
     this.timer = setInterval(() => this.schedule(), 60);
+  }
+
+  async loadFire() {
+    if (this.fireSource || this.loading) return;
+    this.loading = true;
+    try {
+      const response = await fetch(FIRE_AUDIO);
+      if (!response.ok) throw new Error(`Fire recording: HTTP ${response.status}`);
+      const buffer = await this.ctx.decodeAudioData(await response.arrayBuffer());
+      const source = this.ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      source.connect(this.fireGain);
+      source.start();
+      this.fireSource = source;
+      this.schedule();
+    } catch (err) {
+      // A later user gesture can retry if the recording could not be loaded.
+      console.warn('Fireplace: could not load the fire recording.', err);
+    } finally {
+      this.loading = false;
+    }
   }
 
   get ready() {
@@ -108,20 +114,7 @@ export class FireSound {
     if (!this.ready) return;
     const ctx = this.ctx;
     const now = ctx.currentTime;
-    const lv = this.level;
-    this.roarGain.gain.setTargetAtTime(lv * 0.32 + this.ember * 0.015, now, 0.4);
-    this.roarFilter.frequency.setTargetAtTime(220 + lv * 900 + Math.random() * 120, now, 0.25);
-    this.hissGain.gain.setTargetAtTime(lv * lv * 0.025, now, 0.4);
-
-    // Crackles arrive at random (Poisson) times; embers still tick now and then.
-    const rate = lv > 0.01 ? 0.6 + lv * 12 : this.ember * 0.6;
-    const gap = () => Math.min(1.2, -Math.log(1 - Math.random()) / Math.max(rate, 0.05));
-    const horizon = now + (document.hidden ? 1.3 : 0.16);
-    if (this.next < now) this.next = now + gap();
-    while (this.next < horizon) {
-      if (rate > 0.05) this.crackle(this.next, lv > 0.01 && Math.random() < 0.06, lv > 0.01 ? 1 : 0.35);
-      this.next += gap();
-    }
+    this.fireGain.gain.setTargetAtTime(this.level * 0.75 + this.ember * 0.025, now, 0.4);
   }
 
   crackle(t, pop = false, gain = 1) {

@@ -1,0 +1,12 @@
+fireplace.wav
+
+Source: "Fireplace Sound loop" by PagDev
+https://opengameart.org/content/fireplace-sound-loop
+Original file: https://opengameart.org/sites/default/files/fire.wav
+
+License: Creative Commons Zero (CC0 1.0 Universal)
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Prepared for this app with gentle low-cut and high-cut filtering, level
+adjustment, and a 600 ms equal-power loop crossfade. Saved as 22,050 Hz
+stereo, 16-bit PCM WAV for gapless playback without compression artifacts.
